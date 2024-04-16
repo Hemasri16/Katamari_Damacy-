@@ -1,55 +1,84 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-let renderer, scene, camera;
+let renderer, scene, camera, ball;
 
-const load = (url) => new Promise((resolve, reject) => {
-  const loader = new GLTFLoader();
-  loader.load(url, (gltf) => resolve(gltf.scene), undefined, reject);
-});
-
-window.init = async () => {
+const init = () => {
   renderer = new THREE.WebGLRenderer();
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  document.body.appendChild( renderer.domElement );
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(5, 5, 5);
   camera.lookAt(0, 0, 0);
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 10);
   scene.add(directionalLight);
-  const helper = new THREE.DirectionalLightHelper( directionalLight, 5 );
-  scene.add( helper );
 
-  const geometry = new THREE.PlaneGeometry( 1, 1 );
-  const texture = new THREE.TextureLoader().load('./assets/rocks.jpg' ); 
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set( 50, 50 );
-  const material = new THREE.MeshBasicMaterial({
-    map: texture,
-  });
-  const plane = new THREE.Mesh( geometry, material );
-  plane.rotateX(-Math.PI / 2);
-  plane.scale.set(100, 100, 100);
-  //scene.add( plane );
+  // Create a sphere geometry for the ball
+  const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+  // Create a material for the ball
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  // Create a mesh using the geometry and material
+  ball = new THREE.Mesh(geometry, material);
+  // Add the ball to the scene
+  scene.add(ball);
 
-  const gridHelper = new THREE.GridHelper( 10, 10 );
-  scene.add( gridHelper );
+  const gridHelper = new THREE.GridHelper(10, 10);
+  scene.add(gridHelper);
 
-  const axesHelper = new THREE.AxesHelper( 5 );
-  scene.add( axesHelper );
+  animate(); // Start the animation loop
 
-  const porsche = await load('./assets/porsche/scene.gltf');
-  scene.add(porsche);
-
-  console.log('made a scene', porsche);
+  // Listen for keyboard input
+  document.addEventListener('keydown', onKeyDown);
 };
 
-let speed = [0, 0, 0];
-window.loop = (dt, input) => {
-  renderer.render( scene, camera );
+const animate = () => {
+  requestAnimationFrame(animate);
+
+  // Render the scene
+  renderer.render(scene, camera);
 };
 
+const onKeyDown = (event) => {
+  // Movement speed
+  const speed = 0.1;
+
+  switch (event.key) {
+    case 'ArrowRight': // Move forward
+      ball.position.z -= speed;
+      break;
+    case 'ArrowLeft': // Move backward
+      ball.position.z += speed;
+      break;
+    case 'ArrowUp': // Move left
+      ball.position.x -= speed;
+      break;
+    case 'ArrowDown': // Move right
+      ball.position.x += speed;
+      break;
+  }
+
+  // Ensure the ball remains within the visible area of the scene
+  const boundingBox = new THREE.Box3().setFromObject(ball);
+  const { min, max } = boundingBox;
+  const maxX = window.innerWidth / 2;
+  const minX = -window.innerWidth / 2;
+  const maxZ = window.innerHeight / 2;
+  const minZ = -window.innerHeight / 2;
+
+  if (max.x > maxX) {
+    ball.position.x -= (max.x - maxX);
+  }
+  if (min.x < minX) {
+    ball.position.x += (minX - min.x);
+  }
+  if (max.z > maxZ) {
+    ball.position.z -= (max.z - maxZ);
+  }
+  if (min.z < minZ) {
+    ball.position.z += (minZ - min.z);
+  }
+};
+
+window.addEventListener('DOMContentLoaded', init);
