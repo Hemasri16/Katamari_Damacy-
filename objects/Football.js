@@ -6,6 +6,9 @@ import ObjectModule from './Object.js'; // Adjust the path as necessary
 
 let sphereBody, football;
 const cameraOffset = new THREE.Vector3(0, 0.5, 1.2);
+const material = new CANNON.Material();
+material.friction = 0.5; // Adjust as needed
+material.restitution = 0; // No bouncin
 
 function create(scene, world, loader) {
     // Create the football

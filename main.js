@@ -76,6 +76,7 @@ function animate ()  {
     requestAnimationFrame(animate);
     world.step(1 / 60); // Update physics
     Football.animate(camera);
+    
     // Update specific animations
     ObjectModule.update();
     renderer.render(scene, camera);
